@@ -23,6 +23,17 @@ class VakoInvis:
 
 
     def remove(self, item, q, totally=False):
+        """
+        Removes a specified quantity of an item from the inventory.
+        Parameters:
+        item (str): The item to be removed from the inventory.
+        q (int): The quantity of the item to be removed.
+        totally (bool): If True, removes the item completely from the inventory. Defaults to False.
+        Returns:
+        bool: True if the item was successfully removed or quantity was updated, False if the item was not found in the inventory.
+        Raises:
+        KeyError: If the item is not found in the inventory.
+        """
         try:
             if totally:
                 self.inventory.pop(item)
@@ -40,6 +51,15 @@ class VakoInvis:
         
 
     def add(self, item, q, new=False):
+        """
+        Adds a specified quantity of an item to the inventory.
+        Parameters:
+        item (str): The name of the item to add.
+        q (int): The quantity of the item to add.
+        new (bool): If True, sets the quantity of the item to q. If False, adds q to the existing quantity.
+        Returns:
+        bool: True if the operation was successful, False if the item was not found in the inventory.
+        """
         try:
             if new:
                 self.inventory[item]['quantity'] = q
@@ -57,6 +77,19 @@ class VakoInvis:
         
         
     def update_alarm_limit(self, item, limit):
+        """
+        Updates the alarm limit for a specified item in the inventory.
+
+        Args:
+            item (str): The name of the item to update.
+            limit (int): The new alarm limit to set for the item.
+
+        Returns:
+            bool: True if the update was successful, False if the item does not exist in the inventory.
+
+        Raises:
+            KeyError: If the specified item does not exist in the inventory.
+        """
         try: 
             self.inventory[item]['alarm_limit'] = limit
             self.save()
@@ -67,12 +100,29 @@ class VakoInvis:
         
     
     def check_alarm_limit(self, item):
+        """
+        Checks if the quantity of a given item is above its alarm limit.
+
+        Args:zw
+            item (str): The name of the item to check.
+
+        Returns:
+            bool: False if the item's quantity is below its alarm limit and the alarm limit is set, True otherwise.
+        """
         if self.inventory[item]['alarm_limit'] != None and self.inventory[item]['quantity'] < self.inventory[item]['alarm_limit']:
             return False
         return True
         
 
     def print_out(self, item=None, full_info=None):
+        """
+        Prints the inventory details for a specific item or all items.
+        Args:
+            item (str, optional): The name of the item to print. If None, prints all items.
+            full_info (bool, optional): If True, includes the alarm limit in the output.
+        Returns:
+            None
+        """
         if item is not None:
             print(f"{item} => quantity: {self.inventory[item]['quantity']} "
                     f"{f'and alarm limit : {self.inventory[item]['alarm_limit']}' if full_info is not None else ''}")
