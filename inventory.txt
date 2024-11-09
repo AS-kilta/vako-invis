@@ -1,3 +1,3 @@
-liian-saataja-merkki:20
-riittavan-saataja-merkki:10
-as-kilta-merkki:100
+liian-saataja-merkki:20;
+riittavan-saataja-merkki:10;
+as-kilta-merkki:100;
