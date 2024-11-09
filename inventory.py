@@ -1,27 +1,27 @@
 import os
+import json
 
 # Inventory file path
-FILE_PATH = "inventory.txt"
+FILE_PATH = "inventory.json"
 
 class VakoInvis:
-    def __init__(self, file_path = "inventory.txt"):
+    def __init__(self, file_path = "inventory.json"):
         self.file_path = file_path
         self.inventory = self.load()
 
+
     def load(self):
-        inventory = {}
         if os.path.exists(self.file_path):
             with open(self.file_path, "r") as file:
-                for line in file:
-                    item, quantity = line.strip().split(':')
-                    inventory[item] = int(quantity)
-        return inventory
+                return json.load(file)
+        return {}
     
+
     def save(self):
         with open(self.file_path, "w") as file:
-            for item, quantity in self.inventory.items():
-                file.write(f"{item}:{quantity}\n")
-    
+            json.dump(self.inventory, file, indent=4)
+
+
     def remove(self, item, q, totally=False):
         try:
             if totally:
@@ -34,11 +34,10 @@ class VakoInvis:
             self.save()
             return True
         
-        except:
+        except KeyError:
             print("No such item in the inventory")
             return False
-
-
+        
 
     def add(self, item, q, new=False):
         try:
@@ -51,19 +50,36 @@ class VakoInvis:
             self.save()
             return True
         
-        except:
+        except KeyError:
             # if item wasn't found
             print("No such item in the inventory")
             return False
         
-    def print_out(self, item=None):
-        if item != None:
-            print(f"{item} => {self.inventory[item]}")
+        
+    def update_allarm_limit(self, item, limit):
+        try: 
+            self.inventory[item]['alarm_limit'] = limit
+            self.save()
+            return True
+        except:
+            print("No such item in the inventory")
+            return False
+        
+    
+    def check_alarm_limit(self, item):
+        if self.inventory[item]['alarm_limit'] != None and self.inventory[item]['quantity'] < self.inventory[item]['alarm_limit']:
+            return False
+        return True
+        
+    def print_out(self, item=None, full_info=None):
+        if item is not None:
+            print(f"{item} => quantity: {self.inventory[item]['quantity']} "
+                    f"{f'and alarm limit : {self.inventory[item]['alarm_limit']}' if full_info is not None else ''}")
             return
         
         for i in self.inventory:
-            print(f" {i} => {self.inventory[i]}")
-
+            print(f"{i} => quantity: {self.inventory[i]['quantity']} "
+                    f"{f'and alarm limit : {self.inventory[i]['alarm_limit']}' if full_info is not None else ''}")
 
 def main():
     invis = VakoInvis()
