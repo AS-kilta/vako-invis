@@ -1,3 +1,5 @@
-liian-saataja-merkki:20
+liian-saataja-merkki:23
 riittavan-saataja-merkki:10
 as-kilta-merkki:100
+halfzip-musta-m:4
+college-lilac-m:5
