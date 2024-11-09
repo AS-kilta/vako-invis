@@ -22,32 +22,40 @@ class VakoInvis:
             for item, quantity in self.inventory.items():
                 file.write(f"{item}:{quantity}\n")
     
-    def remove(self, item, q):
-        if item in self.inventory:
+    def remove(self, item, q, totally=False):
+        try:
+            if totally:
+                self.inventory.pop(item)
+                self.save()
+                return True
+
             old_q = self.inventory[item]
             self.inventory[item] = max(old_q - q, 0)
-        else:
+            self.save()
+            return True
+        
+        except:
             print("No such item in the inventory")
             return False
-        self.save()
-        return True
+
 
 
     def add(self, item, q, new=False):
-        if new:
-            self.inventory[item] = q
-            self.save()
-            return True
+        try:
+            if new:
+                self.inventory[item] = q
+                self.save()
+                return True
 
-        if item in self.inventory:
             self.inventory[item] += q
             self.save()
             return True
-
-        # if item wasn't found
-        print("No such item in the inventory")
-        return False
-    
+        
+        except:
+            # if item wasn't found
+            print("No such item in the inventory")
+            return False
+        
     def print_out(self, item=None):
         if item != None:
             print(f"{item} => {self.inventory[item]}")
@@ -76,9 +84,10 @@ def main():
             invis.add(item, quantity, new=(True if f_new == 1 else False))
 
         elif choice == "2":
+            t_in = int(input("Enter 1 if you want to totally remove the item and 0 if not: "))
             item = input("Enter item name: ")
             quantity = int(input("Enter quantity to remove: "))
-            invis.remove(item, quantity)
+            invis.remove(item, quantity, totally=(True if t_in == 1 else False))
 
         elif choice == "3":
             invis.print_out()
