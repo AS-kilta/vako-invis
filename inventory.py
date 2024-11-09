@@ -29,8 +29,8 @@ class VakoInvis:
                 self.save()
                 return True
 
-            old_q = self.inventory[item]
-            self.inventory[item] = max(old_q - q, 0)
+            old_q = self.inventory[item]['quantity']
+            self.inventory[item]['quantity'] = max(old_q - q, 0)
             self.save()
             return True
         
@@ -42,11 +42,11 @@ class VakoInvis:
     def add(self, item, q, new=False):
         try:
             if new:
-                self.inventory[item] = q
+                self.inventory[item]['quantity'] = q
                 self.save()
                 return True
 
-            self.inventory[item] += q
+            self.inventory[item]['quantity'] += q
             self.save()
             return True
         
@@ -56,12 +56,12 @@ class VakoInvis:
             return False
         
         
-    def update_allarm_limit(self, item, limit):
+    def update_alarm_limit(self, item, limit):
         try: 
             self.inventory[item]['alarm_limit'] = limit
             self.save()
             return True
-        except:
+        except KeyError:
             print("No such item in the inventory")
             return False
         
@@ -71,6 +71,7 @@ class VakoInvis:
             return False
         return True
         
+
     def print_out(self, item=None, full_info=None):
         if item is not None:
             print(f"{item} => quantity: {self.inventory[item]['quantity']} "
@@ -80,6 +81,7 @@ class VakoInvis:
         for i in self.inventory:
             print(f"{i} => quantity: {self.inventory[i]['quantity']} "
                     f"{f'and alarm limit : {self.inventory[i]['alarm_limit']}' if full_info is not None else ''}")
+
 
 def main():
     invis = VakoInvis()
