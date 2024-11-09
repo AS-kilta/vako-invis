@@ -1,0 +1,22 @@
+{
+    "liian-saataja-merkki": {
+        "quantity": 200,
+        "alarm_limit": 50
+    },
+    "riittavan-saataja-merkki": {
+        "quantity": 100,
+        "alarm_limit": 25
+    },
+    "as-kilta-merkki": {
+        "quantity": 300,
+        "alarm_limit": 150
+    },
+    "halfzip-musta-m": {
+        "quantity": 4,
+        "alarm_limit": null
+    },
+    "college-lilac-m": {
+        "quantity": 5,
+        "alarm_limit": null
+    }
+}
