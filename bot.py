@@ -143,7 +143,9 @@ async def enter_quantity_sell(update: Update, context: ContextTypes.DEFAULT_TYPE
         item = context.user_data['item']
         
         if inventory_manager.remove(item, quantity):
-            await update.message.reply_text(f"Sold {quantity} of '{item}' from the inventory.")
+            alarm = inventory_manager.check_alarm_limit(item)
+            await update.message.reply_text(f"Sold {quantity} of '{item}' from the inventory."
+                                            f"{'\n\nALARM -> QUANTITY OF THIS ITEM IS BELOW ALARM LIMIT, CONTACT THE CHAIR' if not alarm else ''}")
         else:
             await update.message.reply_text(f"Error: Item '{item}' not found.")
         
