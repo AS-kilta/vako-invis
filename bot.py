@@ -10,7 +10,7 @@ TOKEN = open('token.txt', "r").readline().strip()
 PASSWORD = open('password.txt', "r").readline().strip()
 
 PASSWORD_CHECK = 0
-SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT, SELECT_ITEM_SELL, ENTER_QUANTITY_SELL = range(6)
+SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT = range(4)
 
 # starting function
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -21,6 +21,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 async def check_password(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     if update.message.text == PASSWORD:
         await update.message.reply_text("Password correct! Use /help to see available commands.")
+        context.user_data.clear()
         return ConversationHandler.END
     else:
         await update.message.reply_text("Incorrect password. Please try again:")
@@ -51,14 +52,39 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         await update.message.reply_text("Please enter the name of the new item:")
         return ENTER_NAME
 
+    context.user_data['action'] = 'add'
     items = list(inventory_manager.inventory.keys())
     if not items:
         await update.message.reply_text("No items in the inventory to add.")
+        context.user_data.clear()
         return ConversationHandler.END
 
     keyboard = [[item] for item in items]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
     await update.message.reply_text("Please choose an item to add:", reply_markup=reply_markup)
+    return SELECT_ITEM
+
+async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handles the /sell command to remove an item from the inventory.
+    Args:
+        update (Update): The update object that contains information about the incoming update.
+        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
+    Usage:
+        /sell
+    Returns:
+        int: The next state for the conversation handler.
+    """
+    context.user_data['action'] = 'sell'
+    items = list(inventory_manager.inventory.keys())
+    if not items:
+        await update.message.reply_text("No items in the inventory to sell.")
+        context.user_data.clear()
+        return ConversationHandler.END
+
+    keyboard = [[item] for item in items]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Please choose an item to sell:", reply_markup=reply_markup)
     return SELECT_ITEM
 
 async def enter_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -74,7 +100,7 @@ async def enter_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
 
     if context.user_data['item'] in inventory_manager.inventory:
         await update.message.reply_text(f"Item '{context.user_data['item']}' already exists in the inventory. Please enter a different name:")
-        return ConversationHandler.END
+        return ENTER_NAME
 
     inventory_manager.add(context.user_data['item'], 0, new=True)
     await update.message.reply_text(f"Entered item name: {context.user_data['item']}\nPlease enter the quantity to add:")
@@ -90,18 +116,23 @@ async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         int: The next state for the conversation handler.
     """
     context.user_data['item'] = update.message.text
-    print("moi")
 
-    if context.user_data['update']:
+    if 'update' in context.user_data and context.user_data['update']:
         await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the new alarm limit:")
         return ENTER_ALARM_LIMIT
+    else:
+        action = context.user_data['action']
 
-    await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to add:")
-    return ENTER_QUANTITY
+        if action == 'add':
+            await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to add:")
+            return ENTER_QUANTITY
+        elif action == 'sell':
+            await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to sell:")
+            return ENTER_QUANTITY
 
 async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
-    Handles the input of the quantity to add to the selected item.
+    Handles the input of the quantity to add or sell for the selected item.
     Args:
         update (Update): The update object that contains information about the incoming update.
         context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
@@ -111,17 +142,28 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         quantity = int(update.message.text)
         item = context.user_data['item']
+        action = context.user_data['action']
 
-        if context.user_data.get('new_item'):
-            context.user_data['quantity'] = quantity
-            await update.message.reply_text(f"Entered quantity: {quantity}\nPlease enter the alarm limit:")
-            return ENTER_ALARM_LIMIT
+        if action == 'add':
+            if context.user_data.get('new_item'):
+                context.user_data['quantity'] = quantity
+                await update.message.reply_text(f"Entered quantity: {quantity}\nPlease enter the alarm limit:")
+                return ENTER_ALARM_LIMIT
+            
+            if inventory_manager.add(item, quantity):
+                await update.message.reply_text(f"Added {quantity} of '{item}' to the inventory.")
+            else:
+                await update.message.reply_text(f"Error: Item '{item}' not found.")
         
-        if inventory_manager.add(item, quantity):
-            await update.message.reply_text(f"Added {quantity} of '{item}' to the inventory.")
-        else:
-            await update.message.reply_text(f"Error: Item '{item}' not found.")
-        
+        elif action == 'sell':
+            if inventory_manager.remove(item, quantity):
+                alarm = inventory_manager.check_alarm_limit(item)
+                await update.message.reply_text(f"Sold {quantity} of '{item}' from the inventory."
+                                                f"{'\n\nALARM -> QUANTITY OF THIS ITEM IS BELOW ALARM LIMIT, CONTACT THE CHAIR' if not alarm else ''}")
+            else:
+                await update.message.reply_text(f"Error: Item '{item}' not found.")
+
+        context.user_data.clear()
         return ConversationHandler.END
     
     except ValueError:
@@ -146,71 +188,12 @@ async def enter_alarm_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) 
         else:
             await update.message.reply_text(f"Error: Could not update '{item}''s alarm limit.")
         
+        context.user_data.clear()
         return ConversationHandler.END
     
     except ValueError:
         await update.message.reply_text("Invalid alarm limit. Please enter a valid integer:")
         return ENTER_ALARM_LIMIT
-
-async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Handles the /sell command to remove an item from the inventory.
-    Args:
-        update (Update): The update object that contains information about the incoming update.
-        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
-    Usage:
-        /sell
-    Returns:
-        int: The next state for the conversation handler.
-    """
-    items = list(inventory_manager.inventory.keys())
-    if not items:
-        await update.message.reply_text("No items in the inventory to sell.")
-        return ConversationHandler.END
-
-    keyboard = [[item] for item in items]
-    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Please choose an item to sell:", reply_markup=reply_markup)
-    return SELECT_ITEM_SELL
-
-async def select_item_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Handles the selection of an item from the keyboard for selling.
-    Args:
-        update (Update): The update object that contains information about the incoming update.
-        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
-    Returns:
-        int: The next state for the conversation handler.
-    """
-    context.user_data['item'] = update.message.text
-    await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to sell:")
-    return ENTER_QUANTITY_SELL
-
-async def enter_quantity_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
-    """
-    Handles the input of the quantity to sell for the selected item.
-    Args:
-        update (Update): The update object that contains information about the incoming update.
-        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
-    Returns:
-        int: The next state for the conversation handler.
-    """
-    try:
-        quantity = int(update.message.text)
-        item = context.user_data['item']
-        
-        if inventory_manager.remove(item, quantity):
-            alarm = inventory_manager.check_alarm_limit(item)
-            await update.message.reply_text(f"Sold {quantity} of '{item}' from the inventory."
-                                            f"{'\n\nALARM -> QUANTITY OF THIS ITEM IS BELOW ALARM LIMIT, CONTACT THE CHAIR' if not alarm else ''}")
-        else:
-            await update.message.reply_text(f"Error: Item '{item}' not found.")
-        
-        return ConversationHandler.END
-    
-    except ValueError:
-        await update.message.reply_text("Invalid quantity. Please enter a valid integer:")
-        return ENTER_QUANTITY_SELL
 
 async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if context.args:
@@ -229,14 +212,14 @@ async def limit_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     items = list(inventory_manager.inventory.keys())
     if not items:
         await update.message.reply_text("No items in the inventory to add.")
+        context.user_data.clear()
         return ConversationHandler.END
     
     context.user_data['update'] = True
 
     keyboard = [[item] for item in items]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
-    await update.message.reply_text("Please choose an item to add:", reply_markup=reply_markup)
-    print("moi")
+    await update.message.reply_text("Please choose an item to update the alarm limit:", reply_markup=reply_markup)
     return SELECT_ITEM
 
 # Main function to start the bot
@@ -251,8 +234,6 @@ def main():
             SELECT_ITEM: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_item)],
             ENTER_QUANTITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_quantity)],
             ENTER_ALARM_LIMIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_alarm_limit)],
-            SELECT_ITEM_SELL: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_item_sell)],
-            ENTER_QUANTITY_SELL: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_quantity_sell)],
         },
         fallbacks=[],
     )
