@@ -90,6 +90,12 @@ async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int
         int: The next state for the conversation handler.
     """
     context.user_data['item'] = update.message.text
+    print("moi")
+
+    if context.user_data['update']:
+        await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the new alarm limit:")
+        return ENTER_ALARM_LIMIT
+
     await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to add:")
     return ENTER_QUANTITY
 
@@ -134,12 +140,11 @@ async def enter_alarm_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     try:
         alarm_limit = int(update.message.text)
         item = context.user_data['item']
-        quantity = context.user_data['quantity']
         
         if inventory_manager.update_alarm_limit(item, alarm_limit):
-            await update.message.reply_text(f"Added new item '{item}' with quantity {quantity} and alarm limit {alarm_limit} to the inventory.")
+            await update.message.reply_text(f"{item}'s alarm limit updated to {alarm_limit}")
         else:
-            await update.message.reply_text(f"Error: Could not add new item '{item}'.")
+            await update.message.reply_text(f"Error: Could not update '{item}''s alarm limit.")
         
         return ConversationHandler.END
     
@@ -220,23 +225,26 @@ async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         inventory_list = "\n".join([f"{item} =>\n   quantity: {details['quantity']}\n" for item, details in inventory_manager.inventory.items()])
         await update.message.reply_text("\n" + (inventory_list if inventory_list else "Inventory is empty."))
 
-async def limit_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    try:
-        item = context.args[0]
-        limit = context.args[1]
-        if inventory_manager.update_alarm_limit(item, limit):
-            await update.message.reply_text(f"Change limit of the {item} to {limit}")
-        else:
-            await update.message.reply_text(f"Error: Item '{item}' not found")
-    except (IndexError, ValueError):
-        await update.message.reply_text(f"Usage: /limit <item> <new limit>")
+async def limit_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    items = list(inventory_manager.inventory.keys())
+    if not items:
+        await update.message.reply_text("No items in the inventory to add.")
+        return ConversationHandler.END
+    
+    context.user_data['update'] = True
+
+    keyboard = [[item] for item in items]
+    reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
+    await update.message.reply_text("Please choose an item to add:", reply_markup=reply_markup)
+    print("moi")
+    return SELECT_ITEM
 
 # Main function to start the bot
 def main():
     application = Application.builder().token(TOKEN).build()
 
     conv_handler = ConversationHandler(
-        entry_points=[CommandHandler("start", start), CommandHandler("add", add_item), CommandHandler("sell", sell_item)],
+        entry_points=[CommandHandler("start", start), CommandHandler("add", add_item), CommandHandler("sell", sell_item), CommandHandler("limit", limit_item)],
         states={
             PASSWORD_CHECK: [MessageHandler(filters.TEXT & ~filters.COMMAND, check_password)],
             ENTER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_name)],
@@ -253,7 +261,6 @@ def main():
     application.add_handler(conv_handler)
     application.add_handler(CommandHandler("help", help_command))
     application.add_handler(CommandHandler("view", view_inventory))
-    application.add_handler(CommandHandler("limit", limit_item))
 
     # Start polling for updates
     application.run_polling()
