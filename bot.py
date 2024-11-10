@@ -10,7 +10,7 @@ TOKEN = open('token.txt', "r").readline().strip()
 PASSWORD = open('password.txt', "r").readline().strip()
 
 PASSWORD_CHECK = 0
-SELECT_ITEM, ENTER_QUANTITY = range(2)
+SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT, SELECT_ITEM_SELL, ENTER_QUANTITY_SELL = range(6)
 
 # starting function
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -42,10 +42,14 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         update (Update): The update object that contains information about the incoming update.
         context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
     Usage:
-        /add
+        /add [new]
     Returns:
         int: The next state for the conversation handler.
     """
+    if context.args and context.args[0].lower() == "new":
+        await update.message.reply_text("Please enter the name of the new item:")
+        return ENTER_NAME
+
     items = list(inventory_manager.inventory.keys())
     if not items:
         await update.message.reply_text("No items in the inventory to add.")
@@ -55,6 +59,20 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
     await update.message.reply_text("Please choose an item to add:", reply_markup=reply_markup)
     return SELECT_ITEM
+
+async def enter_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handles the input of the name for the new item.
+    Args:
+        update (Update): The update object that contains information about the incoming update.
+        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
+    Returns:
+        int: The next state for the conversation handler.
+    """
+    context.user_data['item'] = update.message.text
+    inventory_manager.add(context.user_data['item'], 0, new=True)
+    await update.message.reply_text(f"Entered item name: {context.user_data['item']}\nPlease enter the quantity to add:")
+    return ENTER_QUANTITY
 
 async def select_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
@@ -78,7 +96,6 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     Returns:
         int: The next state for the conversation handler.
     """
-    print("in quantity")
     try:
         quantity = int(update.message.text)
         item = context.user_data['item']
@@ -93,6 +110,32 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     except ValueError:
         await update.message.reply_text("Invalid quantity. Please enter a valid integer:")
         return ENTER_QUANTITY
+
+async def enter_alarm_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
+    """
+    Handles the input of the alarm limit for the new item.
+    Args:
+        update (Update): The update object that contains information about the incoming update.
+        context (ContextTypes.DEFAULT_TYPE): The context object that contains information about the current context.
+    Returns:
+        int: The next state for the conversation handler.
+    """
+    print("in alarm limit")
+    try:
+        alarm_limit = int(update.message.text)
+        item = context.user_data['item']
+        quantity = context.user_data['quantity']
+        
+        if inventory_manager.add(item, quantity, new=True, alarm_limit=alarm_limit):
+            await update.message.reply_text(f"Added new item '{item}' with quantity {quantity} and alarm limit {alarm_limit} to the inventory.")
+        else:
+            await update.message.reply_text(f"Error: Could not add new item '{item}'.")
+        
+        return ConversationHandler.END
+    
+    except ValueError:
+        await update.message.reply_text("Invalid alarm limit. Please enter a valid integer:")
+        return ENTER_ALARM_LIMIT
 
 async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
@@ -113,7 +156,7 @@ async def sell_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     keyboard = [[item] for item in items]
     reply_markup = ReplyKeyboardMarkup(keyboard, one_time_keyboard=True)
     await update.message.reply_text("Please choose an item to sell:", reply_markup=reply_markup)
-    return SELECT_ITEM
+    return SELECT_ITEM_SELL
 
 async def select_item_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
@@ -126,7 +169,7 @@ async def select_item_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     """
     context.user_data['item'] = update.message.text
     await update.message.reply_text(f"Selected item: {context.user_data['item']}\nPlease enter the quantity to sell:")
-    return ENTER_QUANTITY
+    return ENTER_QUANTITY_SELL
 
 async def enter_quantity_sell(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
@@ -137,7 +180,6 @@ async def enter_quantity_sell(update: Update, context: ContextTypes.DEFAULT_TYPE
     Returns:
         int: The next state for the conversation handler.
     """
-    print("in quantity sell")
     try:
         quantity = int(update.message.text)
         item = context.user_data['item']
@@ -153,7 +195,7 @@ async def enter_quantity_sell(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     except ValueError:
         await update.message.reply_text("Invalid quantity. Please enter a valid integer:")
-        return ENTER_QUANTITY
+        return ENTER_QUANTITY_SELL
 
 async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if context.args:
@@ -187,10 +229,12 @@ def main():
         entry_points=[CommandHandler("start", start), CommandHandler("add", add_item), CommandHandler("sell", sell_item)],
         states={
             PASSWORD_CHECK: [MessageHandler(filters.TEXT & ~filters.COMMAND, check_password)],
+            ENTER_NAME: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_name)],
             SELECT_ITEM: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_item)],
             ENTER_QUANTITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_quantity)],
-            SELECT_ITEM: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_item_sell)],
-            ENTER_QUANTITY: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_quantity_sell)],
+            ENTER_ALARM_LIMIT: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_alarm_limit)],
+            SELECT_ITEM_SELL: [MessageHandler(filters.TEXT & ~filters.COMMAND, select_item_sell)],
+            ENTER_QUANTITY_SELL: [MessageHandler(filters.TEXT & ~filters.COMMAND, enter_quantity_sell)],
         },
         fallbacks=[],
     )

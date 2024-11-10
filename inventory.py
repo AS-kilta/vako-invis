@@ -61,8 +61,8 @@ class VakoInvis:
         bool: True if the operation was successful, False if the item was not found in the inventory.
         """
         try:
-            if new:
-                self.inventory[item]['quantity'] = q
+            if new or item not in self.inventory:
+                self.inventory[item] = {'quantity': q, 'alarm_limit': 0}
                 self.save()
                 return True
 
