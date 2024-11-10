@@ -1,9 +1,9 @@
 {
-    "liian säätäjä merkki": {
-        "quantity": 10,
+    "liian s\u00e4\u00e4t\u00e4j\u00e4 merkki": {
+        "quantity": 6,
         "alarm_limit": 50
     },
-    "riittävän säätäjä merkki": {
+    "riitt\u00e4v\u00e4n s\u00e4\u00e4t\u00e4j\u00e4 merkki": {
         "quantity": 99,
         "alarm_limit": 25
     },
