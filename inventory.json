@@ -1,27 +1,50 @@
 {
     "liian s\u00e4\u00e4t\u00e4j\u00e4 merkki": {
         "quantity": 6,
-        "alarm_limit": 50,
-        "type": "badge"
+        "alarm_limit": 50
     },
     "riitt\u00e4v\u00e4n s\u00e4\u00e4t\u00e4j\u00e4 merkki": {
         "quantity": 99,
-        "alarm_limit": 25,
-        "type": "badge"
+        "alarm_limit": 25
     },
     "kilta merkki": {
         "quantity": 300,
-        "alarm_limit": 150,
-        "type": "badge"
+        "alarm_limit": 150
     },
-    "half zip musta m": {
+    "half zip musta S": {
         "quantity": 4,
-        "alarm_limit": 0,
-        "type": "clothing"
+        "alarm_limit": 0
     },
-    "college liila m": {
+    "half zip musta M": {
         "quantity": 4,
-        "alarm_limit": 0,
-        "type": "clothing"
+        "alarm_limit": 0
+    },
+    "half zip musta L": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "half zip musta XL": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "college liila S": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "college liila M": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "college liila L": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "college liila XL": {
+        "quantity": 4,
+        "alarm_limit": 0
+    },
+    "lol": {
+        "quantity": 0,
+        "alarm_limit": 0
     }
 }
