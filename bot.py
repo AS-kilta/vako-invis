@@ -47,6 +47,7 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         int: The next state for the conversation handler.
     """
     if context.args and context.args[0].lower() == "new":
+        context.user_data['new_item'] = True
         await update.message.reply_text("Please enter the name of the new item:")
         return ENTER_NAME
 
@@ -70,6 +71,11 @@ async def enter_name(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
         int: The next state for the conversation handler.
     """
     context.user_data['item'] = update.message.text
+
+    if context.user_data['item'] in inventory_manager.inventory:
+        await update.message.reply_text(f"Item '{context.user_data['item']}' already exists in the inventory. Please enter a different name:")
+        return ConversationHandler.END
+
     inventory_manager.add(context.user_data['item'], 0, new=True)
     await update.message.reply_text(f"Entered item name: {context.user_data['item']}\nPlease enter the quantity to add:")
     return ENTER_QUANTITY
@@ -99,6 +105,11 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
     try:
         quantity = int(update.message.text)
         item = context.user_data['item']
+
+        if context.user_data.get('new_item'):
+            context.user_data['quantity'] = quantity
+            await update.message.reply_text(f"Entered quantity: {quantity}\nPlease enter the alarm limit:")
+            return ENTER_ALARM_LIMIT
         
         if inventory_manager.add(item, quantity):
             await update.message.reply_text(f"Added {quantity} of '{item}' to the inventory.")
@@ -120,13 +131,12 @@ async def enter_alarm_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) 
     Returns:
         int: The next state for the conversation handler.
     """
-    print("in alarm limit")
     try:
         alarm_limit = int(update.message.text)
         item = context.user_data['item']
         quantity = context.user_data['quantity']
         
-        if inventory_manager.add(item, quantity, new=True, alarm_limit=alarm_limit):
+        if inventory_manager.update_alarm_limit(item, alarm_limit):
             await update.message.reply_text(f"Added new item '{item}' with quantity {quantity} and alarm limit {alarm_limit} to the inventory.")
         else:
             await update.message.reply_text(f"Error: Could not add new item '{item}'.")
