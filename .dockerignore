@@ -1,0 +1,14 @@
+# Ignore sensitive files
+token.txt
+password.txt
+
+# Ignore Python cache
+__pycache__/
+*.pyc
+
+# Ignore local inventory JSON (if it shouldn't be in the container)
+inventory.json
+
+# Git-related files
+.git
+.gitignore

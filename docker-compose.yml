@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  bot:
+    build: .
+    volumes:
+      - .:/app
+    environment:
+      - TOKEN_PATH=/app/token.txt
+      - PASSWORD_PATH=/app/password.txt
+    ports:
+      - "8443:8443"
