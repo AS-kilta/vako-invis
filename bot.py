@@ -158,8 +158,10 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         elif action == 'sell':
             if inventory_manager.remove(item, quantity):
                 alarm = inventory_manager.check_alarm_limit(item)
-                await update.message.reply_text(f"Sold {quantity} of '{item}' from the inventory."
-                                                f"{'\n\nALARM -> QUANTITY OF THIS ITEM IS BELOW ALARM LIMIT, CONTACT THE CHAIR' if not alarm else ''}")
+                await update.message.reply_text(
+                    f"Sold {quantity} of '{item}' from the inventory."
+                    + ("\n\nALARM -> QUANTITY OF THIS ITEM IS BELOW ALARM LIMIT, CONTACT THE CHAIR" if not alarm else "")
+)
             else:
                 await update.message.reply_text(f"Error: Item '{item}' not found.")
 
@@ -200,8 +202,9 @@ async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         item = context.args[0]
         full = len(context.args) > 1 and context.args[1].lower() == "full"
         if item in inventory_manager.inventory:
-            await update.message.reply_text(f"{item}:\n   quantity: {inventory_manager.inventory[item]['quantity']}\n   "
-                                            f"{f'alarm limit : {inventory_manager.inventory[item]['alarm_limit']}' if full else ''}")
+            alarm = inventory_manager.inventory[item]['alarm_limit']    # for some reason docker gives error if this is put into f string
+            await update.message.reply_text(f"{item}:\n   quantity: {inventory_manager.inventory[item]['quantity']}\n"
+                                            + (f'alarm limit : {alarm}' if full else ''))
         else:
             await update.message.reply_text(f"Item '{item}' not found in inventory.")
     else:

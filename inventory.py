@@ -124,13 +124,15 @@ class VakoInvis:
             None
         """
         if item is not None:
+            alarm = self.inventory[item]['alarm_limit']   # for some reason docker gives error if this is put into f string
             print(f"{item} => quantity: {self.inventory[item]['quantity']} "
-                    f"{f'and alarm limit : {self.inventory[item]['alarm_limit']}' if full_info is not None else ''}")
+                    f"{f'and alarm limit : {alarm}' if full_info is not None else ''}")
             return
         
         for i in self.inventory:
+            alarm = self.inventory[i]['alarm_limit']   # for some reason docker gives error if this is put into f string
             print(f"{i} => quantity: {self.inventory[i]['quantity']} "
-                    f"{f'and alarm limit : {self.inventory[i]['alarm_limit']}' if full_info is not None else ''}")
+                    f"{f'and alarm limit : {alarm}' if full_info is not None else ''}")
 
 
 def main():
