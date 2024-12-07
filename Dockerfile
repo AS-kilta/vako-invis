@@ -16,9 +16,5 @@ COPY . /app/
 # Expose the port your application runs on
 EXPOSE 8443
 
-# Define environment variable for token and password files
-ENV TOKEN_PATH=/app/token.txt
-ENV PASSWORD_PATH=/app/password.txt
-
 # Run the bot
 CMD ["python3", "bot.py"]

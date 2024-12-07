@@ -1,6 +1,5 @@
 # ignore the token
-password.txt
-token.txt
+.env
 *.json
 
 ## Ignore Visual Studio temporary files, build results, and

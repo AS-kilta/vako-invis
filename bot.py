@@ -3,11 +3,13 @@ from telegram import Update, ReplyKeyboardMarkup
 from telegram.ext import Application, CommandHandler, ConversationHandler, ContextTypes, MessageHandler, filters
 from inventory import VakoInvis  # Make sure this imports the class you've defined above
 
+from decouple import config
+
 # Initialize the inventory manager
 inventory_manager = VakoInvis("inventory.json")
 
-TOKEN = open('token.txt', "r").readline().strip()
-PASSWORD = open('password.txt', "r").readline().strip()
+TOKEN = config('TG_TOKEN')
+PASSWORD = config('PASSWORD')
 
 PASSWORD_CHECK = 0
 SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT = range(4)
