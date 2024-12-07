@@ -1,9 +1,9 @@
 version: '3.8'
-
 services:
-  bot:
-    image: mrmnv/vako-bot
-    build: .
-    env_file: .env
-    volumes:
-      - .:/app
+  vako-bot:
+    image: mrmnv/vako-bot          # Docker image
+    container_name: vako-bot       # Name the container
+    env_file:                      # Load environment variables
+      - .env
+    volumes:                       # Mount inventory.json
+      - ./inventory.json:/app/inventory.json
