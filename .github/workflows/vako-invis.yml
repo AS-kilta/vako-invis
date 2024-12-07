@@ -21,5 +21,5 @@ jobs:
       
       - name: push image
         run: |
-          docker login -u mrmnv -r ${{ secrets.DOCKER }} 
+          docker login -u mrmnv -p ${{ secrets.DOCKER }} 
           docker push mrmnv/vako-bot:latest
