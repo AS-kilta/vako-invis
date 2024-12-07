@@ -12,7 +12,7 @@ TOKEN = config('TG_TOKEN')
 PASSWORD = config('PASSWORD')
 
 PASSWORD_CHECK = 0
-SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT = range(4)
+PASSWORD_CHECK, SELECT_ITEM, ENTER_QUANTITY, ENTER_NAME, ENTER_ALARM_LIMIT = range(5)
 
 # starting function
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
@@ -51,6 +51,7 @@ async def add_item(update: Update, context: ContextTypes.DEFAULT_TYPE) -> int:
     """
     if context.args and context.args[0].lower() == "new":
         context.user_data['new_item'] = True
+        context.user_data['action'] = 'add'
         await update.message.reply_text("Please enter the name of the new item:")
         return ENTER_NAME
 
@@ -148,7 +149,7 @@ async def enter_quantity(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
         if action == 'add':
             if context.user_data.get('new_item'):
-                context.user_data['quantity'] = quantity
+                inventory_manager.add(item, quantity)
                 await update.message.reply_text(f"Entered quantity: {quantity}\nPlease enter the alarm limit:")
                 return ENTER_ALARM_LIMIT
             
@@ -206,7 +207,7 @@ async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         if item in inventory_manager.inventory:
             alarm = inventory_manager.inventory[item]['alarm_limit']    # for some reason docker gives error if this is put into f string
             await update.message.reply_text(f"{item}:\n   quantity: {inventory_manager.inventory[item]['quantity']}\n"
-                                            + (f'alarm limit : {alarm}' if full else ''))
+                                            + (f'   alarm limit : {alarm}' if full else ''))
         else:
             await update.message.reply_text(f"Item '{item}' not found in inventory.")
     else:
