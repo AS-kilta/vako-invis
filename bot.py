@@ -33,8 +33,8 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text(
         "/add [new] - Add quantity to an item.\n"
         "/sell - Sell quantity of an item.\n"
-        "/view [item] [full] - View inventory or a specific item.\n"
-        "/limit <item> <new limit> - change alarm limit of the item\n"
+        "/view <item> [full] - View inventory or a specific item.\n"
+        "/limit - change alarm limit of the item\n"
         "/help - Show this help message"
     )
 
@@ -202,8 +202,9 @@ async def enter_alarm_limit(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 
 async def view_inventory(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     if context.args:
-        item = context.args[0]
-        full = len(context.args) > 1 and context.args[1].lower() == "full"
+        full = len(context.args) > 1 and "full" in " ".join(context.args).lower()
+        item = " ".join(context.args[:-1]).lower() if full else " ".join(context.args).lower()
+
         if item in inventory_manager.inventory:
             alarm = inventory_manager.inventory[item]['alarm_limit']    # for some reason docker gives error if this is put into f string
             await update.message.reply_text(f"{item}:\n   quantity: {inventory_manager.inventory[item]['quantity']}\n"

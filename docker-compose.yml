@@ -5,5 +5,5 @@ services:
     container_name: vako-bot       # Name the container
     env_file:                      # Load environment variables
       - .env
-    volumes:                       # Mount inventory.json
-      - ./inventory.json:/app/inventory.json
+    # volumes:                       # Mount inventory.json
+    # - ./inventory.json:/app/inventory.json
